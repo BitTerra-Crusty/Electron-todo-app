@@ -1,0 +1,17 @@
+{
+  "name": "shoppingcart",
+  "version": "1.0.0",
+  "description": "Track your everyday task",
+  "main": "main.js",
+  "dependencies": {
+    "alertifyjs": "^1.13.1",
+    "electron": "^10.1.5",
+    "gijgo": "^1.9.13"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "start": "electron ."
+  },
+  "author": "C",
+  "license": "MIT"
+}

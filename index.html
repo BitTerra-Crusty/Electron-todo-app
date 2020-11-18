@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskTracker</title>
+    <link rel="stylesheet" href="css/bootstrap/bootstrap.min.css">
+    <link rel="stylesheet" href="css/fontawesome/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="js/alertify/css/alertify.min.css">
+    <link rel="stylesheet" href="js/alertify/css/themes/default.min.css">
+    <!-- datepicker -->
+    <script src="js/DataTables/jQuery-3.3.1/jquery-3.3.1.min.js"></script>
+    <script src="js/gijgo-combined-1.9.13/js/gijgo.min.js"></script>
+    <link rel="stylesheet" href="js/gijgo-combined-1.9.13/css/gijgo.min.css">
+    
+</head>
+<body>
+    <div class="container-fluid">
+        <h2 class="text-success text-center bg-blue">Task Tracker <img src="imgs/task.png" height="50" /></h2>
+        <div class="tab-container">
+
+            <div class="button-container">
+                <div class="row">
+                    <div class="col-sm-12">
+                        <button onclick="showPanel(0, 'green')"><i class="fa fa-list"></i> ToDo</button>
+                        <button onclick="showPanel(1, 'rgb(104, 201, 8)')"> <i class="fa fa-sticky-note"></i> Notes</button>
+                        <button onclick="showPanel(2, 'rgb(86, 167, 5)')"> <i class="fa fa-desktop"> </i> Screen Capture</button>
+                        <button onclick="showPanel(3, 'rgb(73, 143, 4)')"><i class="fa fa-clock"> </i> Reminder</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="tab-panel" id="todo-panel">
+                <div class="row">
+                    <div class="col-md-12">
+                        <h3><i class="fa fa-clipboard-list"></i> My ToDO</h3>
+                            <div class="text-center">
+                               
+                                <div class="input-group mx-auto col-md-10 mt-5">
+                                    <input id="todo" type="text" placeholder="Add todo" maxlength="30" minlength="3" class="form-control">
+                                    <input id="datepicker" readonly disabled width="250" class="mx-auto"/>
+                                    <button class="btn btn-success" id="toDo-submit">Add</button>
+                                </div>
+                            </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-12 text-center">
+                        <div class="container mt-5 col-md-10 mx-auto">
+                            <table id="myTodo-table" class="text-white table striped table-borderedless table-sm">
+                                <tbody id="tableBody">
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div class="col-md-12" id="my-todo-list">
+                            
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-panel">
+                <div class="row">
+                    <div class="col-md-12">
+                        tab 2 content
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-panel">
+                <div class="row">
+                    <div class="col-md-12">
+                        tab 3 content
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-panel">
+                <div class="row">
+                    <div class="col-md-12">
+                        tab 4 content
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    
+    <script src="js/myMain.js"></script>
+    <script src="js/alertify/alertify.min.js"></script>
+    <script src="js/jquery/dist/jquery.min.js"></script>
+    <script>
+        var datepicker = require('gijgo');
+        var today = new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate());
+        var dd = String(today.getDate()).padStart(2,'0');
+        var mm = String(today.getMonth() + 1).padStart(2,'0');
+        var yyyy = today.getFullYear();
+
+        var formatedDate = dd+'-'+mm+'-'+yyyy;
+
+        $('#datepicker').datepicker({
+            size: "medium",
+            value: formatedDate,
+            uiLibrary: "bootstrap4",
+            footer: true,
+            format: 'dd-mm-yyyy',
+            minDate: today,
+        });
+    </script>
+    <script>
+        const fs = require('fs');
+        const alertify = require('alertifyjs');
+
+        function completeToDo(id)
+        {
+            var xhr = new XMLHttpRequest();
+                xhr.open('GET', 'todos/todos.json', true);
+            
+                xhr.onload = function(a){
+                    
+                    a.preventDefault();
+                    if(this.status == 200)
+                    {
+                        try
+                        {
+                            var allJsonTodos = JSON.parse(this.responseText);
+                            var todoObj;
+
+                            for(var existingTodo of allJsonTodos)
+                            {
+                                if(existingTodo.id == id)
+                                {
+                                    todoObj = existingTodo;
+                                    break;
+                                }
+                            }
+
+                            //logic
+                            var doesExist = false;
+                            let todoIndex = 0;
+                            for(var existingTodos of allJsonTodos)
+                            {
+                                if(existingTodos.id == id)
+                                {
+                                    allJsonTodos[todoIndex].isComplete = true;
+                                    dooesExist = true;
+                                    break;
+                                }
+                                todoIndex++;
+                            }
+
+                            if(!doesExist)
+                            {
+                                var combinedObj = JSON.stringify(allJsonTodos);
+
+                                fs.writeFile('todos/todos.json', combinedObj, err => {
+                                    if (err) {
+                                        alertify.set('notifier', 'position', 'top-left');
+                                        alertify.error("Error while trying to add a ToDo");
+                                    } else {
+                                        alertify.set('notifier', 'position', 'top-left');
+                                        alertify.success("ToDo task has been removed successfully");
+                                        GetToDos();
+                                    }
+                                });
+                            }
+                        }
+                        catch(exception)
+                        {
+                            console.log(exception);
+                            if(exception == "SyntaxError: Unexpected end of JSON input")
+                            {
+                                var combinedObj = JSON.stringify([]);
+
+                                fs.writeFile('todos/todos.json', combinedObj, err => {
+                                    if (err) {
+                                        
+                                    } else {
+                                        
+                                        GetToDos();
+                                    }
+                                })
+                                SendTodo(myTodo);
+                            }
+                            else{
+                            alertify.set('notifier', 'position', 'top-left');
+                            alertify.error("Opps!, Error while trying to add a ToDo task");
+                            GetToDos();
+                            }
+                        }
+                    }
+                    else{
+                        alertify.set('notifier', 'position', 'top-left');
+                        alertify.error("Error while trying to retrieve ToDos");
+
+                        return todos;
+                    }
+                }
+
+            xhr.send();
+        }
+
+        function removeToDo(id)
+        {
+            var xhr = new XMLHttpRequest();
+                xhr.open('GET', 'todos/todos.json', true);
+            
+                xhr.onload = function(a){
+                    
+                    a.preventDefault();
+                    if(this.status == 200)
+                    {
+                        try
+                        {
+                            var allJsonTodos = JSON.parse(this.responseText);
+                            var todoObj;
+
+                            for(var existingTodo of allJsonTodos)
+                            {
+                                if(existingTodo.id == id)
+                                {
+                                    todoObj = existingTodo;
+                                    break;
+                                }
+                            }
+
+                            alertify.confirm("Remove ToDO", "Are you sure you want to remove this todo task?.", function(){
+                                //logic
+                                var doesExist = false;
+                                let todoIndex = 0;
+                                for(var existingTodos of allJsonTodos)
+                                {
+                                    if(existingTodos.id == id)
+                                    {
+                                        allJsonTodos.splice(todoIndex, 1);
+                                        dooesExist = true;
+                                        break;
+                                    }
+                                    todoIndex++;
+                                }
+
+                                if(!doesExist)
+                                {
+                                    var combinedObj = JSON.stringify(allJsonTodos);
+
+                                    fs.writeFile('todos/todos.json', combinedObj, err => {
+                                        if (err) {
+                                            alertify.set('notifier', 'position', 'top-left');
+                                            alertify.error("Error while trying to add a ToDo");
+                                        } else {
+                                            alertify.set('notifier', 'position', 'top-left');
+                                            alertify.success("ToDo task has been removed successfully");
+                                            GetToDos();
+                                        }
+                                    });
+                                }
+
+                            }, function(){alertify.error("Canceled")});
+                        }
+                        catch(exception)
+                        {
+                            console.log(exception);
+                            if(exception == "SyntaxError: Unexpected end of JSON input")
+                            {
+                                var combinedObj = JSON.stringify([]);
+
+                                fs.writeFile('todos/todos.json', combinedObj, err => {
+                                    if (err) {
+                                        
+                                    } else {
+                                        
+                                        GetToDos();
+                                    }
+                                })
+                                SendTodo(myTodo);
+                            }
+                            else{
+                            alertify.set('notifier', 'position', 'top-left');
+                            alertify.error("Opps!, Error while trying to add a ToDo task");
+                            GetToDos();
+                            }
+                        }
+                    }
+                    else{
+                        alertify.set('notifier', 'position', 'top-left');
+                        alertify.error("Error while trying to retrieve ToDos");
+
+                        return todos;
+                    }
+                }
+
+            xhr.send();
+        }
+        function editToDo(id)
+        {
+            var xhr = new XMLHttpRequest();
+                xhr.open('GET', 'todos/todos.json', true);
+            
+                xhr.onload = function(a){
+                    
+                    a.preventDefault();
+                    if(this.status == 200)
+                    {
+                        try
+                        {
+                            var allJsonTodos = JSON.parse(this.responseText);
+                            var todoObj;
+
+                            for(var existingTodo of allJsonTodos)
+                            {
+                                if(existingTodo.id == id)
+                                {
+                                    todoObj = existingTodo;
+                                    break;
+                                }
+                            }
+
+                            alertify.prompt("ToDO", "Edit ToDO", todoObj.todo, function(evt, value){
+                                //logic
+                                var dooesExist = false;
+                                for(var existingTodos of allJsonTodos)
+                                {
+                                    if(existingTodos.todo.toLowerCase() == value.toLowerCase() && existingTodos.id != id)
+                                    {
+                                        dooesExist = true;
+                                        alertify.set('notifier', 'position', 'top-left');
+                                        alertify.error("Opps, todo "+todoObj.todo+" already exists");
+                                        break;
+                                    }
+                                }
+
+                                if(!dooesExist)
+                                {
+                                    var count = 0;
+                                    for(var existingTodos of allJsonTodos)
+                                    {
+                                        if(existingTodos.id == id)
+                                        {
+                                            allJsonTodos[count].todo = value;
+                                            break;
+                                        }
+
+                                        count++;
+                                    }
+
+                                    var combinedObj = JSON.stringify(allJsonTodos);
+
+                                    fs.writeFile('todos/todos.json', combinedObj, err => {
+                                        if (err) {
+                                            alertify.set('notifier', 'position', 'top-left');
+                                            alertify.error("Error while trying to add a ToDo task");
+                                        } else {
+                                            alertify.set('notifier', 'position', 'top-left');
+                                            alertify.success("ToDo task has been added successfully");
+                                            GetToDos();
+                                        }
+                                    });
+                                }
+
+                            }, function(){alertify.error("Canceled")});
+                        }
+                        catch(exception)
+                        {
+                            console.log(exception);
+                            if(exception == "SyntaxError: Unexpected end of JSON input")
+                            {
+                                var combinedObj = JSON.stringify([]);
+
+                                fs.writeFile('todos/todos.json', combinedObj, err => {
+                                    if (err) {
+                                        
+                                    } else {
+                                        
+                                        GetToDos();
+                                    }
+                                })
+                                SendTodo(myTodo);
+                            }
+                            else{
+                            alertify.set('notifier', 'position', 'top-left');
+                            alertify.error("Opps!, Error while trying to add a ToDo");
+                            GetToDos();
+                            }
+                        }
+                    }
+                    else{
+                        alertify.set('notifier', 'position', 'top-left');
+                        alertify.error("Error while trying to retrieve ToDos");
+
+                        return todos;
+                    }
+                }
+
+            xhr.send();
+        }
+        function SendTodo(myTodo, PassedtodoDate)
+        {
+            var todoObj = {
+                id : randomUUID(),
+                todo: myTodo,
+                isAvailable: false,
+                todoDate: PassedtodoDate
+            };
+            var xhr = new XMLHttpRequest();
+                xhr.open('GET', 'todos/todos.json', true);
+            
+                xhr.onload = function(a){
+                    
+                    a.preventDefault();
+                    if(this.status == 200)
+                    {
+                        try
+                        {
+                            var allJsonTodos = JSON.parse(this.responseText);
+                            var dooesExist = false;
+
+                            for(var existingTodos of allJsonTodos)
+                            {
+                                if(existingTodos.todo.toLowerCase() == todoObj.todo.toLowerCase())
+                                {
+                                    dooesExist = true;
+                                    alertify.set('notifier', 'position', 'top-left');
+                                    alertify.error("Opps, todo "+todoObj.todo+" already exists");
+                                    break;
+                                }
+                            }
+                            if(!dooesExist)
+                            {
+                                allJsonTodos.push(todoObj);
+
+                                var combinedObj = JSON.stringify(allJsonTodos);
+
+                                fs.writeFile('todos/todos.json', combinedObj, err => {
+                                    if (err) {
+                                        alertify.set('notifier', 'position', 'top-left');
+                                        alertify.error("Error while trying to add a ToDo");
+                                    } else {
+                                        alertify.set('notifier', 'position', 'top-left');
+                                        alertify.success("ToDo has been added successfully");
+                                        GetToDos();
+                                    }
+                                })
+                            }
+                        }
+                        catch(exception)
+                        {
+                            console.log(exception);
+                            if(exception == "SyntaxError: Unexpected end of JSON input")
+                            {
+                                var combinedObj = JSON.stringify([]);
+
+                                fs.writeFile('todos/todos.json', combinedObj, err => {
+                                    if (err) {
+                                        
+                                    } else {
+                                        
+                                        GetToDos();
+                                    }
+                                })
+                                SendTodo(myTodo);
+                            }
+                            else{
+                            alertify.set('notifier', 'position', 'top-left');
+                            alertify.error("Opps!, Error while trying to add a ToDo");
+                            GetToDos();
+                            }
+                        }
+                    }
+                    else{
+                        alertify.set('notifier', 'position', 'top-left');
+                        alertify.error("Error while trying to retrieve ToDos");
+
+                        return todos;
+                    }
+                }
+
+                xhr.send();
+        }
+        function GetToDos()
+            {
+                document.getElementById("myTodo-table").innerHTML = "";
+                var xhr = new XMLHttpRequest();
+                    xhr.open('GET', 'todos/todos.json', false);
+
+                    xhr.onload = function(a){
+                        a.preventDefault();
+                        if(this.status == 200)
+                        {
+                            var todos;
+                            var pass = false;
+                            if(this.responseText == null || this.responseText == "")
+                            {
+                                pass = false;
+                            }
+                            else{
+                                pass = true;
+                                 todos = JSON.parse(this.responseText);
+                            }
+                      
+                            if(pass)
+                            {
+                                if(todos.length > 5)
+                                {
+                                    document.getElementById("todo-panel").style.overflowY = "scroll";
+                                }
+                                else{
+                                    document.getElementById("todo-panel").style.overflowY = "hidden";
+                                }
+                                var output = '';
+                                for(var item of todos)
+                                {
+                                    let tableRow = document.createElement("tr");
+                                        if(item.isComplete)
+                                        {
+                                            tableRow.setAttribute("class", "strikeout");
+                                        }
+                           
+
+                                    let todoItem = document.createElement('td');
+                                        //todoItem.setAttribute('class', 'float-left');
+
+                                        var theDate = new Date();
+
+                                        var day = String(theDate.getDate()).padStart(2,'0');
+                                        var month = String(theDate.getMonth() + 1).padStart(2,'0');
+                                        var year = theDate.getFullYear();
+
+                                        var currentDate = day+'-'+month+'-'+year;
+
+                                        var innerdate = currentDate;
+
+                                        var theTodoDate = String(item.todoDate);
+
+                                        var d = theTodoDate.substring(0, theTodoDate.indexOf('-')).trim();
+                                        theTodoDate = theTodoDate.substring(theTodoDate.indexOf('-') + 1, theTodoDate.length).trim();
+                                        var m = theTodoDate.substring(0, theTodoDate.indexOf('-')).trim();
+                                        theTodoDate = theTodoDate.substring(theTodoDate.indexOf('-') + 1, theTodoDate.length).trim();
+                                        var y = theTodoDate.substring(0, theTodoDate.length).trim();
+
+                                        // alert("day "+ d);
+                                        // alert("month "+m);
+                                        // alert("year "+y);
+
+                                        // alert("cday "+ day);
+                                        // alert("cmonth "+month);
+                                        // alert("cyear "+year);
+
+                                        if(d == day && m == month && y == year)
+                                        {
+                                            todoItem.innerHTML = item.todo +' <small class="text-primary"> Today </small>';
+                                        }
+                                        else if(d == parseInt(day) + 1 && m == month && y == year)
+                                        {
+                                            todoItem.innerHTML = item.todo +' <small class="text-primary"> Tomorrow </small>';
+                                        }
+                                        else if(y < year)
+                                        {
+                                            todoItem.innerHTML = item.todo +' <small class="text-primary"> '+item.todoDate+' </small"> <small class="text-danger font-weight-bold"> date due </small>';
+                                        }
+                                        else if(m < month && y == year)
+                                        {
+                                            todoItem.innerHTML = item.todo +' <small class="text-primary"> '+item.todoDate+' </small> <small class="text-danger font-weight-bold"> date due </small>';
+                                        }
+                                        else if(d < day && (m == month || m < month) && (y == year || y < year) )
+                                        {
+                                            todoItem.innerHTML = item.todo +' <small class="text-primary"> '+item.todoDate+' </small> <small class="text-danger font-weight-bold"> date due </small>';
+                                        }
+                                        else{
+                                            todoItem.innerHTML = item.todo +' <small class="text-primary"> '+item.todoDate+' </small>';
+                                        }
+
+                                        if(item.isComplete)
+                                        {
+                                                    let todoActions = document.createElement('td');
+                                                todoActions.setAttribute('class', 'text-center');
+                                                
+                                            //remove
+                                                let removeButton = document.createElement('a');
+                                                removeButton.setAttribute('class', 'badge badge-pill badge-danger btn btn-sm remove-btn');
+                                                removeButton.innerHTML = "remove ";
+                                                removeButton.setAttribute('id', item.id);
+                                                removeButton.style.cursor = "pointer";
+
+                                                    let removeIcon = document.createElement('i');
+                                                    removeIcon.setAttribute('class', 'text-light fa fa-trash-alt');
+                                                    removeIcon.style.curser = "pointer";
+                                                removeButton.appendChild(removeIcon);
+
+                                                todoActions.appendChild(removeButton);
+                                            
+                                            let editButton = document.createElement('a');
+                                                editButton.setAttribute('class', 'badge badge-pill badge-secondary disabled btn btn-sm text-black');
+                                                editButton.innerHTML = "edit ";
+                                                editButton.setAttribute('id', item.id);
+                                                editButton.style.marginLeft = "5px";
+                                                editButton.style.cursor = "pointer";
+
+
+                                                    let editIcon = document.createElement('i');
+                                                    editIcon.setAttribute('class', ' text-light fa fa-edit');
+                                                    editIcon.style.curser = "pointer";
+                                                    editButton.appendChild(editIcon);
+
+                                                todoActions.appendChild(editButton);
+                                            let completeButton = document.createElement('a');
+                                                completeButton.setAttribute('class', 'badge badge-pill badge-secondary disabled btn btn-sm');
+                                                completeButton.innerHTML = "completed ";
+                                                completeButton.setAttribute('id', item.id);
+                                                completeButton.style.marginLeft = "5px";
+                                                completeButton.style.cursor = "pointer";
+
+                                                    let completeIcon = document.createElement('i');
+                                                    completeIcon.setAttribute('class', 'text-light fa fa-check');
+                                                    completeIcon.style.curser = "pointer";
+                                                    completeIcon.style.color = "rgb(97, 248, 9)";
+                                                    completeButton.appendChild(completeIcon);
+
+                                                todoActions.appendChild(completeButton);
+
+                                            tableRow.appendChild(todoItem);
+                                            tableRow.appendChild(todoActions);
+
+                                            document.getElementById("myTodo-table").appendChild(tableRow);
+                                        }
+                                        else{
+                                                    let todoActions = document.createElement('td');
+                                                todoActions.setAttribute('class', 'text-center');
+                                                
+                                            //remove
+                                                let removeButton = document.createElement('a');
+                                                removeButton.setAttribute('class', 'badge badge-pill badge-danger btn btn-sm remove-btn');
+                                                removeButton.innerHTML = "remove ";
+                                                removeButton.setAttribute('id', item.id);
+                                                removeButton.style.cursor = "pointer";
+
+                                                    let removeIcon = document.createElement('i');
+                                                    removeIcon.setAttribute('class', 'text-light fa fa-trash-alt');
+                                                    removeIcon.style.curser = "pointer";
+                                                removeButton.appendChild(removeIcon);
+
+                                                todoActions.appendChild(removeButton);
+                                            
+                                            let editButton = document.createElement('a');
+                                                editButton.setAttribute('class', 'badge badge-pill badge-primary btn btn-sm text-black edit-btn');
+                                                editButton.innerHTML = "edit ";
+                                                editButton.setAttribute('id', item.id);
+                                                editButton.style.marginLeft = "5px";
+                                                editButton.style.cursor = "pointer";
+
+                                                    let editIcon = document.createElement('i');
+                                                    editIcon.setAttribute('class', ' text-light fa fa-edit');
+                                                    editIcon.style.curser = "pointer";
+                                                    editButton.appendChild(editIcon);
+
+                                                todoActions.appendChild(editButton);
+                                            let completeButton = document.createElement('a');
+                                                completeButton.setAttribute('class', 'badge badge-pill badge-success btn btn-sm complete-btn');
+                                                completeButton.innerHTML = "complete ";
+                                                completeButton.setAttribute('id', item.id);
+                                                completeButton.style.marginLeft = "5px";
+                                                completeButton.style.cursor = "pointer";
+
+                                                    let completeIcon = document.createElement('i');
+                                                    completeIcon.setAttribute('class', 'text-light fa fa-check');
+                                                    completeIcon.style.curser = "pointer";
+                                                    completeIcon.style.color = "rgb(97, 248, 9)";
+                                                    completeButton.appendChild(completeIcon);
+
+                                                todoActions.appendChild(completeButton);
+
+                                            tableRow.appendChild(todoItem);
+                                            tableRow.appendChild(todoActions);
+
+                                            document.getElementById("myTodo-table").appendChild(tableRow);
+                                        }
+
+                                    
+                                }
+                            }
+                            
+                            let removeBtn = document.querySelectorAll(".remove-btn");
+                            let editBtn = document.querySelectorAll(".edit-btn");
+                            let completeBtn = document.querySelectorAll(".complete-btn");
+
+                            for(let removeBtnIndex = 0; removeBtnIndex < removeBtn.length; removeBtnIndex++)
+                            {
+                                removeBtn[removeBtnIndex].addEventListener("click", function(e){
+                                    removeToDo(removeBtn[removeBtnIndex].id);
+                                });
+                            }
+
+                            for(let editBtnIndex = 0; editBtnIndex < editBtn.length; editBtnIndex++)
+                            {
+                                editBtn[editBtnIndex].addEventListener("click", function(e){
+                                    editToDo(editBtn[editBtnIndex].id);
+                                });
+                            }
+
+                            for(let completeBtnIndex = 0; completeBtnIndex < completeBtn.length; completeBtnIndex++)
+                            {
+                                completeBtn[completeBtnIndex].addEventListener("click", function(e){
+                                    completeToDo(completeBtn[completeBtnIndex].id);
+                                });
+                            }
+                            //document.getElementById("my-todo-list").innerHTML = output;
+                        }
+                        // elseif(this.status == 400)
+                        // {
+                        //     alertify.set('notifier', 'position', 'top-left');
+                        //     alertify.error("Todos file not found");
+                        // }
+                    }
+                    xhr.onerror = function(b)
+                    {
+                        b.preventDefault();
+                        alertify.set('notifier', 'position', 'top-left');
+                        alertify.error("some error occured");
+                    }
+
+                    xhr.send();
+            }
+            
+            GetToDos();
+            let todoSubmit = document.getElementById("toDo-submit");
+
+            todoSubmit.addEventListener("click",(e) =>
+            {
+                e.preventDefault();
+
+                var todo = document.getElementById('todo');
+           
+                var todoDate = document.getElementById('datepicker').value;
+  
+                if(todo.value == null || todo.value == "")
+                {
+                    todo.style.borderColor = "red";
+                    todo.style.borderWidth = "5px";
+                    todo.setAttribute("placeholder", "ToDo value is required");
+
+                    alertify.set('notifier', 'position', 'top-left');
+                    alertify.error("Todo value is required");
+                }
+                else{
+                    todo.style.borderColor = "green";
+                    todo.style.borderWidth = "0";
+              
+                    SendTodo(todo.value, todoDate);
+                   
+                    GetToDos();
+                }
+            });
+            
+    function randomUUID() {
+        var s = [], itoh = '0123456789ABCDEF';
+        for (var i = 0; i < 36; i++) s[i] = Math.floor(Math.random() * 0x10);
+        s[14] = 4;
+        s[19] = (s[19] & 0x3) | 0x8;
+        for (var i = 0; i < 36; i++) s[i] = itoh[s[i]];
+        s[8] = s[13] = s[18] = s[23] = '_';
+        return s.join('');
+    }  
+    </script>
+</div>
+</body>
+</html>
