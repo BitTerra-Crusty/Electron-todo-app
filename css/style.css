@@ -3,6 +3,9 @@
     height: 500px;
    
 }
+.save_button {
+    min-width: 120px !important;
+}
 .tab-container .button-container{
     height: 15%;
 }

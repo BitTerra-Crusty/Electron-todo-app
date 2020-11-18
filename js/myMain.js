@@ -3,6 +3,10 @@ var tabPanels = document.querySelectorAll(".tab-container .tab-panel");
 
 function showPanel(panelIndex, color)
 {
+    if(panelIndex == 3)
+    {
+        document.getElementById("reminderBtn").click();
+    }
     tabButtons.forEach(function(node){
         node.style.background = "";
         node.style.color = "";
